@@ -62,7 +62,7 @@ The first time you launch node-airplayhub it will generate a config file and aut
 - **alias**: Alias gives a way to override the name of a zone.
 - **host**: The host name of the AirPlay device.
 - **port**: Port number of the AirPlay device.
-- **volume**: This sets the initial volume level of the AirPlay device but it is updated dinamically as you chantge volume in the WebUI.
+- **volume**: This sets the initial volume level of the AirPlay device but it is updated dinamically as you change volume in the WebUI.
 - **enabled**: Whether output is enabled or not. This value is also updated dynamically as you turn outputs on and off.
 - **hidden**: There may be some devices you never want to use. In that case you can set the zone to hidden.
 
