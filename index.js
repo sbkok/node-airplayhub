@@ -8,6 +8,9 @@ var config = {
     "debug": false,
     "idletimout": 600,
     "mastervolume": -15,
+    "updateconfig": true,
+    "scandevices": true,
+    "addunknowndevices": true,
     "zones": []
 };
 var configPath = './config.json';
@@ -22,11 +25,13 @@ if (argv.h || argv.help) {
     if(!path.isAbsolute(configPath)) configPath = path.join(__dirname, configPath)
 }
 
-try{
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-} catch(e) {
+// Check whether the config file exists, if not, create it.
+if (!fs.existsSync(configPath)) {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
 }
+
+// This could result in an exception, since we want it to be discovered we leave it here without a try-catch block.
+config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 var zones = config.zones;
 var express = require('express');
@@ -260,7 +265,7 @@ function validateDevice(service) {
 
     // If it is a new zone, thank you very much, add it and write it to our config
     // TODO: I re-used the ./config.json used elsewhere in this application. Ideally, it should take the parameter passed in --config and not just 'require' the file but properly read it and parse it and write it back here
-    if (zoneUnknown) {
+    if (zoneUnknown && !!config.addunknowndevices) {
         zones.push({
             "name": service.name,
             "host": service.ip,
@@ -276,22 +281,28 @@ function validateDevice(service) {
 };
 
 process.on('SIGTERM', function () {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+    // Write config to disk when updateconfig boolean is set to true.
+    // Or when the value is not defined in the config file.
+    if (!!config.updateconfig || config.updateconfig == undefined) {
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+    }
     process.exit(1);
 });
 
-// browse for all raop services
-var browser = bonjour.find({
-    type: 'raop'
-});
+if (!!config.scandevices) {
+    // browse for all raop services
+    var browser = bonjour.find({
+        type: 'raop'
+    });
 
-browser.on('up', function (service) {
-    validateDevice(service);
-});
+    browser.on('up', function (service) {
+        validateDevice(service);
+    });
 
-browser.on('down', function (service) {
-    // TODO
-});
+    browser.on('down', function (service) {
+        // TODO
+    });
 
-browser.start();
+    browser.start();
+}
 
